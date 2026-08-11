@@ -19,4 +19,5 @@ dependencies = [
     "torch>=2.13.0",
     "tqdm>=4.70.0",
     "vnpy>=4.4.0",
+    "xgboost>=3.4.0",
 ]
