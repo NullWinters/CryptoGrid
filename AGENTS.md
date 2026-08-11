@@ -10,3 +10,7 @@
 ## 数据检查
 
 - 使用 duckdb 查阅 `data/` 下的表数据（如 CSV）进行校验。
+
+## Notebook 图片
+
+- 在 notebook 中直接展示图片（如 `IPython.display.display`），不要额外保存到 `pic/`。
