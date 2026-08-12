@@ -5,7 +5,8 @@
 #   MA_WINDOWS="10 20 30 60 90"  GATE_WINDOWS="10 20 30 60 90"
 #   K_WIDTHS="2 3 4 5"  TARGET_RETS="0.005 0.01 0.015 0.02 0.03"
 #   ATR_WINDOWS="7 14 21"  MAX_STEPS=300
-#   DATA=...  START=auto  END=...  METRIC=sharpe  PARALLEL=8
+#   DATA=...  VT_SYMBOL=...  PRICETICK=...  VOLUME_PER_GRID=...
+#   START=auto  END=...  METRIC=sharpe  PARALLEL=8
 #
 # 说明：START=auto 时每组参数从各自最早可回测日（数据起始后 max(ma,gate,atr) 个交易日）
 # 回测到 END，因此各组回测区间长度不同；按 Sharpe 排序取优，不比较收益绝对值。
@@ -18,7 +19,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PY="uv run python $SCRIPT_DIR/dynamic_grid_backtest.py"
-
 MA_WINDOWS="${MA_WINDOWS:-10 20 30 60 90}"
 GATE_WINDOWS="${GATE_WINDOWS:-10 20 30 60 90}"
 K_WIDTHS="${K_WIDTHS:-2 3 4 5}"
@@ -26,6 +26,15 @@ TARGET_RETS="${TARGET_RETS:-0.005 0.01 0.015 0.02 0.03}"
 ATR_WINDOWS="${ATR_WINDOWS:-7 14 21}"
 MAX_STEPS="${MAX_STEPS:-300}"
 DATA="${DATA:-$SCRIPT_DIR/../data/eth_usdt_1d.csv}"
+# 转绝对路径（基于仓库根，不依赖调用 cwd）：xargs 子进程 cwd 不确定
+case "$DATA" in
+  "$SCRIPT_DIR"/*) : ;;
+  /*) : ;;
+  *) DATA="$(dirname "$SCRIPT_DIR")/${DATA#../}" ;;
+esac
+VT_SYMBOL="${VT_SYMBOL:-ETHUSDT.GLOBAL}"
+PRICETICK="${PRICETICK:-0.01}"
+VOLUME_PER_GRID="${VOLUME_PER_GRID:-1.0}"
 START="${START:-auto}"
 END="${END:-2025-12-31}"
 METRIC="${METRIC:-sharpe}"
@@ -40,6 +49,7 @@ emit_job() {
     local out
     out="$($PY \
         --data "$DATA" --start "$START" --end "$END" \
+        --vt-symbol "$VT_SYMBOL" --pricetick "$PRICETICK" --volume-per-grid "$VOLUME_PER_GRID" \
         --ma-window "$ma" --gate-window "$gate" --k-width "$kw" \
         --target-ret "$tr" --atr-window "$atr" --max-steps "$MAX_STEPS" \
         --lab "$lab" --print-json 2>/dev/null)" || {
@@ -49,7 +59,7 @@ emit_job() {
     printf 'ma=%s\tgate=%s\tK=%s\tret=%s\tatr=%s\t%s\n' "$ma" "$gate" "$kw" "$tr" "$atr" "$out"
 }
 
-export PY DATA START END MAX_STEPS LAB_ROOT
+export PY DATA START END MAX_STEPS LAB_ROOT VT_SYMBOL PRICETICK VOLUME_PER_GRID
 export -f emit_job
 
 echo "搜索网格: MA∈{$MA_WINDOWS} GATE∈{$GATE_WINDOWS} K∈{$K_WIDTHS} RET∈{$TARGET_RETS} ATR∈{$ATR_WINDOWS}"
@@ -74,7 +84,14 @@ done \
 | xargs -P "$PARALLEL" -n 5 bash -c 'emit_job "$@"' _ \
 >> "$LAB_ROOT/results.tsv"
 
-echo "搜索完成 $(date '+%H:%M:%S')，共 $(wc -l < "$LAB_ROOT/results.tsv") 组有效结果，失败 $(wc -l < "$LAB_ROOT/fail.log" 2>/dev/null || echo 0) 组"
+fail_cnt=$(if [ -f "$LAB_ROOT/fail.log" ]; then wc -l < "$LAB_ROOT/fail.log"; else echo 0; fi)
+echo "搜索完成 $(date '+%H:%M:%S')，共 $(wc -l < "$LAB_ROOT/results.tsv") 组有效结果，失败 $fail_cnt 组"
+if [ -f "$LAB_ROOT/fail.log" ] && [ -s "$LAB_ROOT/fail.log" ]; then
+  echo "--- 失败明细 ---"
+  cat "$LAB_ROOT/fail.log"
+  echo "--- 首个失败 err.log ---"
+  head -c 1500 "$LAB_ROOT"/lab_*/err.log 2>/dev/null
+fi
 
 # 聚合排序（系统 python3 仅用标准库 json）
 python3 - "$METRIC" "$LAB_ROOT/results.tsv" "$DATA" "$START" "$END" "$MAX_STEPS" <<'EOF'

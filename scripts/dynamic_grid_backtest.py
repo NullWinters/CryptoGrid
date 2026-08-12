@@ -557,7 +557,7 @@ def parse_args() -> argparse.Namespace:
                         help="回测策略：dynamic=动态带+门控（默认），static_gate=静态MA门控，plain=无门控")
     parser.add_argument("--print-json", action="store_true", help="输出单行 JSON（供参数搜索解析）")
     parser.add_argument("--plot", default="", help="输出目录（如 pic/），非空时生成净值/区间/回撤 3 张图")
-    parser.add_argument("--plot-prefix", default="", help="图片文件名前缀（如 train_ / val_）")
+    parser.add_argument("--plot-prefix", default="", help="图片文件名前缀，自动加币种（如 TRXUSDT+train_ -> trx_train_）")
     return parser.parse_args()
 
 
@@ -696,7 +696,9 @@ def main() -> int:
     result = run_backtest(df, cfg, cls)
 
     if args.plot:
-        plot_report(result, cfg, args.plot, args.plot_prefix or "")
+        coin = args.vt_symbol.split(".")[0].replace("USDT", "").lower()
+        prefix = f"{coin}_{args.plot_prefix}" if args.plot_prefix else coin + "_"
+        plot_report(result, cfg, args.plot, prefix)
 
     if args.print_json:
         json_result = {k: v for k, v in result.items() if k not in ("balance", "bdf")}
