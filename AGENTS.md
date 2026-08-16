@@ -13,4 +13,4 @@
 
 ## Notebook 图片
 
-- 在 notebook 中直接展示图片（如 `IPython.display.display`），不要额外保存到 `pic/`。
+- 在 notebook 中直接展示图片，不要额外保存到 `pic/`。
