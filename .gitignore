@@ -6,3 +6,5 @@ __pycache__/
 .mplconfig/
 .tmp_*
 *.html
+.opencode/
+.plugin-src/
