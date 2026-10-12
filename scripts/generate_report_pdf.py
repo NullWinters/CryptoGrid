@@ -44,7 +44,7 @@ ax.plot(nav.index, nav.values, lw=1.8, color="#1f77b4", label="风险平价 DQN 
 ax.plot(eq_nav.index, eq_nav.values, lw=1.2, color="#d62728", label="等权 DQN 组合")
 ax.plot(bh_nav.index, bh_nav.values, lw=1.1, color="#7f7f7f", ls="--", label="等权 Buy&Hold")
 ax.axhline(100_000, color="#333", ls=":", lw=0.8)
-ax.set_title("组合净值对比（2026-01 ~ 2026-07）"); ax.set_ylabel("净值 (USDT)")
+ax.set_title("组合净值对比（2026-01 ~ 2026-09）"); ax.set_ylabel("净值 (USDT)")
 ax.legend(loc="lower left", fontsize=8); fig.tight_layout()
 img_nav = fig_to_base64(fig); plt.close(fig)
 
@@ -160,10 +160,10 @@ img {{ width:100%; margin:8px 0; page-break-inside:avoid; break-inside:avoid; }}
 </style></head><body>
 
 <h1>七币种 DQN 门控策略风险平价组合</h1>
-<div class="meta">策略报告 · 2026-01-01 ~ 2026-07-31 · 初始资金 100,000 USDT</div>
+<div class="meta">策略报告 · 2026-01-01 ~ 2026-09-30 · 初始资金 100,000 USDT</div>
 
 <h2>一、数据描述</h2>
-<p>标的池为 BTC、ETH、BNB、SOL、TRX、XLM、PAXG 七币种，USDT 计价，Binance 现货小时级 OHLCV，样本区间 2021-01-01 ~ 2026-08-14。策略模型训练区间 2022-01-01 ~ 2025-12-31；组合回测区间 2026-01-01 ~ 2026-07-31。价格不做复权，现货无资金费率。</p>
+<p>标的池为 BTC、ETH、BNB、SOL、TRX、XLM、PAXG 七币种，USDT 计价，Binance 现货小时级 OHLCV，样本区间 2021-01-01 ~ 2026-10-11。策略模型训练区间 2022-01-01 ~ 2025-12-31；组合回测区间 2026-01-01 ~ 2026-09-30。价格不做复权，现货无资金费率。</p>
 <table>
 <tr><th>分组</th><th>币种</th><th>角色</th></tr>
 <tr><td>核心蓝筹组</td><td>BTC、ETH、BNB、SOL</td><td>承担加密市场长期风险溢价，提供趋势弹性</td></tr>
@@ -198,11 +198,11 @@ img {{ width:100%; margin:8px 0; page-break-inside:avoid; break-inside:avoid; }}
 <p><b>最大回撤发生时段</b>：组合最大回撤 {m_rp['max_dd']*100:.2f}%，回撤起点约 {peak_time.strftime('%Y-%m-%d %H:%M')}，低点约 {trough.strftime('%Y-%m-%d %H:%M')}。</p>
 <p><b>连续亏损尾部</b>：小时级最长连续亏损约 {max_neg_run} 小时，起点约 {max_run_start.strftime('%Y-%m-%d %H:%M') if max_run_start is not None else '—'}。</p>
 <p><b>与基准的相关性</b>：风险平价组合日收益与等权 DQN 组合相关系数 {corr_eq:.3f}，与等权 Buy&amp;Hold 相关系数 {corr_bh:.3f}。说明组合波动来源与等权 DQN 接近，但显著低于 B&amp;H。</p>
-<p><b>集中度风险</b>：PAXG + TRX 权重合计最高约 {max(weights.iloc[0]['PAXG']+weights.iloc[0]['TRX'], weights.iloc[1]['PAXG']+weights.iloc[1]['TRX'])*100:.2f}%，若两者同时趋势性下跌，组合防守优势将明显削弱。</p>
+<p><b>集中度风险</b>：PAXG + TRX 权重合计最高约 {weights[['PAXG', 'TRX']].sum(axis=1).max()*100:.2f}%，若两者同时趋势性下跌，组合防守优势将明显削弱。</p>
 <p><b>模型/参数风险</b>：DQN 门控模型为 seed 42 单种子；风险平价参数（λ=0.98、单资产上限 40%）未经训练集回放校准。</p>
 
 <h2>六、小结</h2>
-<p>本策略在 2026 上半年加密市场整体下跌的环境里，实现了 +1.68% 的正收益和 -7.05% 的最大回撤，显著优于等权 DQN 组合（-5.11%）和等权 Buy&amp;Hold（-20.86%）。收益来源主要来自两层设计：<b>DQN 门控在单币种上减少下跌段亏损，风险平价在组合层把资金压向低波动资产</b>。适合希望参与加密市场、但对回撤敏感、愿意放弃部分上涨弹性的稳健型投资者；不建议作为趋势牛市中追求高弹性的单一全仓策略。</p>
+<p>本策略在 2026 年 1 至 9 月的行情里实现了 {pct(m_rp['total_return'])} 的总收益和 {pct(m_rp['max_dd'])} 的最大回撤，优于等权 DQN 组合（{pct(m_eq['total_return'])}，回撤 {pct(m_eq['max_dd'])}）和等权 Buy&amp;Hold（{pct(m_bh['total_return'])}，回撤 {pct(m_bh['max_dd'])}）。上半年加密市场整体下跌，组合依靠单币种 DQN 门控减少下跌段亏损、季度风险平价把资金压向低波动资产，把回撤控制在相对较浅的水平；三季度市场转涨，防守姿态让出部分弹性，单币种层面 DQN 门控相对 MA 门控收益胜 {n_win_ret}/7、回撤更小 {n_win_dd}/7，组合仍保持正收益且回撤未再加深。收益来源主要来自两层设计：<b>DQN 门控在单币种上减少下跌段亏损，风险平价在组合层把资金压向低波动资产</b>。适合希望参与加密市场、但对回撤敏感、愿意放弃部分上涨弹性的稳健型投资者；不建议作为趋势牛市中追求高弹性的单一全仓策略。</p>
 
 </body></html>"""
 

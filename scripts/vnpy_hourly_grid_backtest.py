@@ -635,7 +635,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--data", default=str(PROJECT_ROOT / "data" / "btc_usdt_1h.csv"), help="小时频 OHLCV CSV")
     parser.add_argument("--actions", default=str(PROJECT_ROOT / "data" / "dqn_gate_test_actions.csv"), help="DQN 测试集动作 CSV")
     parser.add_argument("--start", default="2026-01-01", help="回测起始时间")
-    parser.add_argument("--end", default="2026-07-31 23:00:00", help="回测结束时间")
+    parser.add_argument("--end", default="2026-09-30 23:00:00", help="回测结束时间")
     parser.add_argument("--vt-symbol", default="BTCUSDT.GLOBAL", help="vnpy 合约代码")
     parser.add_argument("--lab", default=str(PROJECT_ROOT / "data" / "vnpy_lab_btc_1h"), help="vnpy 数据实验室目录")
 

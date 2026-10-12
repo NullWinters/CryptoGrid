@@ -4,7 +4,7 @@
   （模型来自 models/dqn_gate_{coin}_a1_1h.zip，A1 账户状态，1h 决策）
 - 组合：每季度末做风险平价（ERC）优化，优化器使用 cvxopt
 - 权重输入：七币种原生价格日收益率的 EWMA 协方差（无前视，只用 ≤ 调仓日数据）
-- 运行区间：2026-01-01 ~ 2026-07-31，季度调仓 03-31 / 06-30
+- 运行区间：2026-01-01 ~ 2026-09-30，季度调仓 03-31 / 06-30
 - 费用：调仓 0.1% 单边，按 |Δ资金| 计
 - 保存运行数据到 data/portfolio_7coins_*.csv / json
 """
@@ -52,7 +52,7 @@ N_STACK = 4
 TRAIN_START = "2022-01-01"
 TRAIN_END = "2025-12-31 23:00:00"
 VAL_START = "2026-01-01"
-VAL_END = "2026-07-31 23:00:00"
+VAL_END = "2026-09-30 23:00:00"
 
 MODEL_DIR = PROJECT_ROOT / "models"
 DATA_DIR = PROJECT_ROOT / "data"

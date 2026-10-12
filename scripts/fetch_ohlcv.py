@@ -50,10 +50,17 @@ def fetch_ohlcv(
     ts = pd.to_datetime(df["timestamp"], unit="ms", utc=True)
     start_ts = pd.Timestamp(start_date, tz="UTC")
     end_ts = pd.Timestamp(end_date, tz="UTC") + pd.Timedelta(days=1) - pd.Timedelta(milliseconds=1)
+    # 时间戳先入列再过滤，避免用未过滤的 ts 赋值给已裁剪的 df 时按索引错位
+    df["timestamp"] = ts
     df = df[(ts >= start_ts) & (ts <= end_ts)].copy()
+    if df.empty:
+        raise RuntimeError(
+            f"过滤后无数据：请求区间 {start_date}~{end_date}，"
+            f"但交易所最早可用数据晚于该区间"
+        )
 
     fmt = "%Y-%m-%d" if timeframe.endswith("d") else "%Y-%m-%d %H:%M:%S"
-    df["timestamp"] = ts.dt.strftime(fmt)
+    df["timestamp"] = df["timestamp"].dt.strftime(fmt)
 
     df = df.drop_duplicates(subset="timestamp", keep="first").sort_values("timestamp").reset_index(drop=True)
     return df
