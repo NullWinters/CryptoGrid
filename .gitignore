@@ -5,7 +5,11 @@ __pycache__/
 *.pyc
 .mplconfig/
 .tmp_*
-*.html
 .opencode/
+.specify/
 .plugin-src/
 .env
+node_modules/
+dist/
+build/
+.playwright-cli/
