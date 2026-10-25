@@ -6,11 +6,15 @@
 """
 from __future__ import annotations
 
+import asyncio
 import time
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from hyperliquid.info import Info
 
+import db
+import strategy_engine as engine
+import strategy_api
 from hl_proxy import Proxy
 
 REST_URLS = {
@@ -25,6 +29,13 @@ VALID_INTERVALS = {
 }
 
 app = FastAPI(title="Realtime Market Dashboard")
+app.include_router(strategy_api.router)
+
+
+@app.on_event("startup")
+async def _startup() -> None:
+    db.init_db()
+    asyncio.create_task(engine.recover())
 
 # Info 客户端按环境缓存，避免每次请求重建
 _info: dict[str, Info] = {}
@@ -66,12 +77,27 @@ async def stream(ws: WebSocket):
         await ws.send_json(msg)
 
     proxy = Proxy(send)
+    strategy_task: asyncio.Task | None = None
+
+    async def push_strategy() -> None:
+        while True:
+            try:
+                await ws.send_json({"channel": "strategy", "data": engine.current()})
+            except Exception:
+                return
+            await asyncio.sleep(3)
+
     try:
         while True:
             req = await ws.receive_json()
-            if req.get("action") == "subscribe":
+            action = req.get("action")
+            if action == "subscribe":
                 await proxy.subscribe(req["env"], req["coin"], req["interval"])
+            elif action == "watch_strategy" and strategy_task is None:
+                strategy_task = asyncio.create_task(push_strategy())
     except WebSocketDisconnect:
         pass
     finally:
+        if strategy_task:
+            strategy_task.cancel()
         await proxy.close()

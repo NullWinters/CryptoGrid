@@ -10,7 +10,7 @@ scripts/    # 数据拉取、回测、参数搜索、DQN 训练/消融、组合�
 data/       # 多币种日线与小时线 OHLCV、vnpy 数据实验室、回测运行数据
 models/     # 七币种 DQN 门控模型
 pic/        # 回测与组合优化图片
-platform/   # 实时行情看板，后端 FastAPI 薄代理 + 前端 React，详见 platform/readme.md
+platform/   # 交易平台，含市场看板与策略交易两页，后端 FastAPI + 前端 React + SQLite，详见 platform/readme.md
 时频策略报告.pdf # 七币种 DQN 门控策略风险平价组合报告
 ```
 

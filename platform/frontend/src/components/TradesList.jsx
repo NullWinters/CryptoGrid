@@ -1,28 +1,68 @@
-export default function TradesList({ trades, up, down, muted }) {
+import { useLayoutEffect, useRef } from "react";
+
+export default function TradesList({ trades }) {
+  const scrollRef = useRef(null);
+  const prevHeight = useRef(0);
+  const prevTop = useRef(0);
+  const atTop = useRef(true);
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (prevHeight.current > 0) {
+      if (atTop.current) {
+        el.scrollTop = 0;
+      } else {
+        el.scrollTop = prevTop.current + (el.scrollHeight - prevHeight.current);
+      }
+    }
+    prevHeight.current = el.scrollHeight;
+    prevTop.current = el.scrollTop;
+  }, [trades]);
+
+  function onScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    atTop.current = el.scrollTop <= 8;
+    prevTop.current = el.scrollTop;
+  }
+
   if (!trades || trades.length === 0) {
-    return <div style={{ color: muted, fontSize: 13, padding: 8 }}>暂无最新成交</div>;
+    return <div className="empty-state">暂无最新成交</div>;
   }
 
   return (
-    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-      <thead>
-        <tr style={{ color: muted, textAlign: "right" }}>
-          <th style={{ textAlign: "left", fontWeight: 500, padding: "2px 6px" }}>时间</th>
-          <th style={{ fontWeight: 500, padding: "2px 6px" }}>价格</th>
-          <th style={{ fontWeight: 500, padding: "2px 6px" }}>数量</th>
-        </tr>
-      </thead>
-      <tbody>
-        {trades.map((t, i) => (
-          <tr key={i} style={{ color: t.side === "B" ? up : down }}>
-            <td style={{ padding: "2px 6px", fontFamily: "monospace" }}>
-              {new Date(t.time).toLocaleTimeString()}
-            </td>
-            <td style={{ padding: "2px 6px", fontFamily: "monospace", textAlign: "right" }}>{t.px}</td>
-            <td style={{ padding: "2px 6px", fontFamily: "monospace", textAlign: "right" }}>{t.sz}</td>
+    <div
+      className="trades-scroll"
+      ref={scrollRef}
+      onScroll={onScroll}
+      tabIndex={0}
+      role="region"
+      aria-label="最新市场成交"
+    >
+      <table className="table">
+        <thead>
+          <tr>
+            <th>时间</th>
+            <th>方向</th>
+            <th className="num">价格</th>
+            <th className="num">数量</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {trades.map((t, i) => {
+            const buy = t.side === "B";
+            return (
+              <tr key={`${t.time}-${t.tid ?? i}`}>
+                <td className="mono">{new Date(t.time).toLocaleTimeString()}</td>
+                <td className={buy ? "up" : "down"}>{buy ? "买" : "卖"}</td>
+                <td className={`num ${buy ? "up" : "down"}`}>{t.px}</td>
+                <td className={`num ${buy ? "up" : "down"}`}>{t.sz}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }

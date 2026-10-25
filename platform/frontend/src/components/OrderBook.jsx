@@ -1,28 +1,28 @@
-const cell = { textAlign: "right", padding: "1px 8px" };
-
 // 只渲染一侧；levels 已按最优价在前，直接从上到下排列
-export default function OrderBook({ levels, color, muted }) {
+export default function OrderBook({ levels, side = "buy", label }) {
   const rows = (levels ?? []).slice(0, 20);
-  if (rows.length === 0) return <div style={{ color: muted, fontSize: 13 }}>暂无订单簿数据</div>;
+  if (rows.length === 0) return <div className="empty-state">暂无订单簿数据</div>;
 
   return (
-    <table style={{ width: "100%", fontFamily: "monospace", fontSize: 13, borderCollapse: "collapse" }}>
-      <thead>
-        <tr style={{ color: muted }}>
-          <th style={cell}>价格</th>
-          <th style={cell}>数量</th>
-          <th style={cell}>订单数</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((l, i) => (
-          <tr key={i} style={{ color }}>
-            <td style={cell}>{l.px}</td>
-            <td style={cell}>{l.sz}</td>
-            <td style={cell}>{l.n}</td>
+    <div className="table-scroll" tabIndex={0} role="region" aria-label={label ?? "订单簿"}>
+      <table className={`table ${side === "buy" ? "book-buy" : "book-sell"}`}>
+        <thead>
+          <tr>
+            <th className="num">价格</th>
+            <th className="num">数量</th>
+            <th className="num">订单数</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((level, i) => (
+            <tr key={`${level.px}-${i}`}>
+              <td className="num px">{level.px}</td>
+              <td className="num">{level.sz}</td>
+              <td className="num">{level.n}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -1,6 +1,5 @@
 .venv/
 .idea/
-data/
 __pycache__/
 *.pyc
 .mplconfig/
@@ -13,3 +12,6 @@ node_modules/
 dist/
 build/
 .playwright-cli/
+/data/
+/platform/data/
+/specs

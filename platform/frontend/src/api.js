@@ -20,6 +20,7 @@ export function openStream(handlers) {
   const proto = location.protocol === "https:" ? "wss" : "ws";
   const ws = new WebSocket(`${proto}://${location.host}/api/stream`);
   let current = null;
+  let watching = false;
 
   ws.onmessage = (ev) => {
     const msg = JSON.parse(ev.data);
@@ -28,6 +29,7 @@ export function openStream(handlers) {
   };
   ws.onopen = () => {
     if (current) ws.send(JSON.stringify({ action: "subscribe", ...current }));
+    if (watching) ws.send(JSON.stringify({ action: "watch_strategy" }));
   };
 
   return {
@@ -35,6 +37,12 @@ export function openStream(handlers) {
       current = { env, coin, interval };
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ action: "subscribe", ...current }));
+      }
+    },
+    watchStrategy() {
+      watching = true;
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ action: "watch_strategy" }));
       }
     },
     close() {
